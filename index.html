@@ -4,215 +4,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeorgeCS</title>
+    <title>GeorgeCS.dev</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
         body {
             margin: 0;
-            background-color: #121212;
+            background-color: #0a0a0a;
             color: #e0e0e0;
             font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            /* Prevent horizontal scroll */
-        }
-
-        /* Portfolio Layout */
-        header {
-            padding: 40px 20px;
-            text-align: center;
-            background: linear-gradient(180deg, #1e1e1e 0%, #121212 100%);
-            border-bottom: 1px solid #333;
-        }
-
-        h1 {
-            font-size: 3rem;
-            background: linear-gradient(90deg, #4CAF50, #81C784);
-            background-clip: text;
-            /* Standard */
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0 0 10px 0;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: #aaa;
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Game Wrapper */
-        #game-container {
-            position: relative;
-            width: 80vw;
-            height: 60vh;
-            max-width: 1280px;
-            max-height: 720px;
-            min-height: 500px;
-            background: #000;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-            border: 1px solid #333;
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            outline: none;
-        }
-
-        /* Menu Overlay (Absolute within Game Container) */
-        #main-menu {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+        }
+
+        .content {
+            text-align: center;
             z-index: 10;
-            color: white;
+        }
+
+        h1 {
+            font-size: 5rem;
+            margin: 0;
+            background: linear-gradient(135deg, #4CAF50 0%, #81C784 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 30px rgba(76, 175, 80, 0.3));
+            letter-spacing: -2px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #888;
+            margin-top: 10px;
+            animation: fadeInUp 1s ease-out 0.3s backwards;
+        }
+
+        .nav-menu {
+            margin-top: 50px;
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            animation: fadeInUp 1s ease-out 0.6s backwards;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: inline-block;
+        }
+
+        .nav-link:hover {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.2);
+        }
+
+        /* Dropdown */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1e1e1e;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            border: 1px solid #333;
+            z-index: 100;
+            overflow: visible;
+            opacity: 0;
             transition: opacity 0.3s ease;
         }
 
-        #main-menu h2 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: #fff;
+        /* Bridge the gap so mouse doesn't leave hover area */
+        .dropdown-content::before {
+            content: "";
+            position: absolute;
+            top: -20px;
+            left: 0;
+            width: 100%;
+            height: 20px;
         }
 
-        button {
-            padding: 12px 24px;
-            font-size: 18px;
-            cursor: pointer;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            margin-top: 15px;
-            font-weight: bold;
-            transition: transform 0.1s, background 0.2s;
+        .nav-item:hover .dropdown-content {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.3s ease;
         }
 
-        button:hover {
-            background: #45a049;
-            transform: scale(1.05);
+        .dropdown-content a {
+            color: #e0e0e0;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 1rem;
+            transition: background 0.2s;
+            text-align: left;
         }
 
-        button:active {
-            transform: scale(0.95);
-        }
-
-        /* Content Sections */
-        .section {
-            margin: 60px 0;
-            padding: 20px;
-            background: #1e1e1e;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 800px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-        }
-
-        .section h3 {
-            font-size: 1.8rem;
-            margin-top: 0;
+        .dropdown-content a:hover {
+            background-color: #333;
             color: #4CAF50;
         }
 
-        .section p {
-            line-height: 1.8;
-            color: #ccc;
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        footer {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            border-top: 1px solid #333;
-            margin-top: 40px;
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
-    <link rel="icon" href="dist/favicon.png">
-    <script defer src="dist/bundle.js"></script>
 </head>
 
 <body>
-    <header>
+    <div class="content">
         <h1>GeorgeCS.dev</h1>
-        <p class="subtitle">Exploring WebGPU rendering. <br> Scroll down to play an interactive
-            demo.</p>
-    </header>
+        <p class="subtitle">Software Engineering / Computer Graphics / Systems Programming</p>
 
-    <div class="container">
-        <!-- Game Section -->
-        <div id="game-container">
-            <div id="main-menu">
-                <h2>George webGPU testing</h2>
-                <button id="start-btn">Start Game</button>
+        <div class="nav-menu">
+            <div class="nav-item">
+                <a href="about.html" class="nav-link">About Me</a>
+            </div>
 
-                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: start;">
-                    <label style="font-size: 16px; cursor: pointer;">
-                        <input type="checkbox" id="chk-shadows" checked> Enable Shadows
-                    </label>
-                    <label style="font-size: 16px; cursor: pointer;">
-                        <input type="checkbox" id="chk-lock-time"> Lock Time to Noon
-                    </label>
-                    <label style="font-size: 16px; cursor: pointer; color: #aaa;">
-                        <input type="checkbox" id="chk-third-person" disabled> On-Foot 3rd Person (Coming Soon)
-                    </label>
+            <div class="nav-item">
+                <a href="#" class="nav-link">Portfolio ▼</a>
+                <div class="dropdown-content">
+                    <a href="minecraft.html">WebGPU Minecraft</a>
                 </div>
             </div>
-            <canvas id="gfx-main"></canvas>
-        </div>
-
-        <!-- Info Section -->
-        <div class="section">
-            <h3>About This Project</h3>
-            <p>
-                This specialized WebGPU demo showcases advanced voxel rendering techniques directly in the browser.
-                Utilizing compute shaders for occlusion culling and instanced rendering, it achieves high frame rates
-                even with dynamic lighting and shadows.
-                <br><br>
-                <strong>Controls:</strong> WASD to Move, Space to Jump, Click to Mine/Place. E near Spider to ride.
-                Scroll Wheel while on Spider to zoom.
-                <br>
-                <strong>Tech Stack:</strong> TypeScript, WebGPU, GL-Matrix, nodeJS.
-            </p>
-        </div>
-
-        <div class="section">
-            <h3>Development Log</h3>
-            <p>
-                - <strong>Terrain Generation:</strong> Infinite chunk-based system with Perlin noise.<br>
-                - <strong>Lighting:</strong> Day/night cycle with dynamic shadowing.<br>
-                - <strong>Entity System:</strong> custom mechanics for spider riding and TNT physics.<br>
-                - <strong>Performance:</strong> Optimized for maximum frame rates with compute shaders.<br>
-                - <strong>Inverse Kinematics:</strong> Custom IK system for spider riding.
-            </p>
         </div>
     </div>
-
-    <footer>
-        &copy; 2026 GeorgeCS.dev. All rights reserved.
-    </footer>
 </body>
 
 </html>

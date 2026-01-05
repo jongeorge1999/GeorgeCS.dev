@@ -34,7 +34,7 @@ module.exports = {
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/index.html',
-            filename: '../index.html',
+            filename: '../minecraft.html',
             favicon: './src/favicon.png'
         })
     ],
