@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graphics Engine - GeorgeCS.dev</title>
+    <title>A* Pathfinding Visualizer - GeorgeCS.dev</title>
     <link rel="icon" href="assets/favicon.png" type="image/png">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
@@ -76,6 +76,16 @@
             line-height: 1.5;
         }
 
+        a.repo-link {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a.repo-link:hover {
+            text-decoration: underline;
+        }
+
         .image-gallery {
             display: grid;
             grid-template-columns: 1fr;
@@ -101,44 +111,36 @@
         <div style="position: absolute; top: 20px; left: 20px;">
             <a href="index.html" class="nav-link">← Back to Home</a>
         </div>
-        <h1>Graphics Engine</h1>
+        <h1>A* Pathfinding Visualizer</h1>
     </header>
 
     <div class="container">
         <p>
-            This is my personal engine that I am developing from the ground up in C++/OpenGL.
-            Used for general rendering and graphics programming.
+            My Interactive A* pathfinding visualizer where the user can draw barriers and have the closest path be
+            recalculated in real time.
         </p>
         <p>
-            View source code on GitHub: <a href="https://github.com/jongeorge1999/OPENGL_3D_RENDERER" class="repo-link"
-                target="_blank">https://github.com/jongeorge1999/OPENGL_3D_RENDERER</a>
+            View Code on GitHub: <a href="https://github.com/jongeorge1999/AstarVisualizer" class="repo-link"
+                target="_blank">https://github.com/jongeorge1999/AstarVisualizer</a>
         </p>
 
-        <h2>Features</h2>
+        <h2>Controls</h2>
         <ul>
-            <li>OBJ loading/processing</li>
-            <li>UI with Scene/Hierarchy/Inspector</li>
-            <li>Lighting/Shadows</li>
-            <li>Postprocessing options (MSAA, filter, blur, etc.)</li>
-            <li>Lightweight Entity Component System</li>
-            <li>Inspector controlled transforms, widgets</li>
-            <li>Instanced Rendering</li>
-            <li>Normal/Parallax Mapping</li>
-            <li>Skyboxes</li>
-            <li>Reflection cubemaps</li>
-            <li>Transparency</li>
-            <li>Normal vector visualization</li>
+            <li><strong>Left-Click:</strong> Places Barrier at mouse Position</li>
+            <li><strong>Right-Click:</strong> Places Goal</li>
+            <li><strong>Middle-Click:</strong> Places Pathfinder</li>
+            <li><strong>P:</strong> Start Pathfinding</li>
+            <li><strong>O:</strong> Pause Pathfinding</li>
+            <li><strong>R:</strong> Reset Canvas</li>
         </ul>
 
         <div class="image-gallery">
-            <img src="https://github.com/user-attachments/assets/0209dab2-56d8-429e-99cd-85c10298b6c2"
-                alt="Graphics Engine Screenshot 1">
-            <img src="https://github.com/user-attachments/assets/d6d545ca-3ee1-4d3a-91b9-3aa2a179c075"
-                alt="Graphics Engine Screenshot 2">
-            <img src="https://github.com/user-attachments/assets/3021ad5c-35b6-4c78-a0dc-022b7c30c20b"
-                alt="Graphics Engine Screenshot 3">
-            <img src="https://github.com/user-attachments/assets/f8e074d2-2e61-462f-857a-d328d28490e1"
-                alt="Graphics Engine Screenshot 4">
+            <img src="https://github.com/user-attachments/assets/e06f2db9-f183-48a6-9601-ef8c9f8e4d2c"
+                alt="A* Visualizer Screenshot 1">
+            <img src="https://github.com/user-attachments/assets/7f796dea-03ed-408f-aa97-f92519def1f3"
+                alt="A* Visualizer Screenshot 2">
+            <img src="https://github.com/user-attachments/assets/60a6785b-833f-417b-b75b-3f3839cb5fa3"
+                alt="A* Visualizer Screenshot 3">
         </div>
     </div>
 </body>
