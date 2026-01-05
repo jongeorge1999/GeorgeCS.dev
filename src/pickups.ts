@@ -113,7 +113,7 @@ export class PickupSystem {
             else if (p.type === 1) color = vec4.fromValues(0.55, 0.35, 0.25, 1); // Dirt (brown)
             else if (p.type === 2) color = vec4.fromValues(0.45, 0.7, 0.3, 1); // Grass (bright green)
             else if (p.type === 4) color = vec4.fromValues(0.9, 0.15, 0.15, 1); // TNT (bright red)
-            else if (p.type === 5) color = vec4.fromValues(1.0, 0.65, 0.0, 1); // Torch (bright orange)
+
 
             renderer.drawCubeEuler(device, passEncoder, p.position, p.rotation, scale, color);
         }

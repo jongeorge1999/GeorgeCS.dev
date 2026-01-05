@@ -48,7 +48,7 @@ import grassTopImageSrc from './assets/grass_top.png';
 // @ts-ignore
 import tntImageSrc from './assets/tnt.png';
 // @ts-ignore
-import torchImageSrc from './assets/torch.png';
+
 
 // --- Texture Loading ---
 async function loadAndResizeBitmap(src: string, width: number, height: number) {
@@ -72,18 +72,17 @@ console.log('Loading textures...');
 console.log('Grass texture source:', grassImageSrc);
 console.log('Dirt texture source:', dirtImageSrc);
 
-const [imgCobble, imgDirt, imgNewGrass, imgGrassTop, imgTNT, imgTorch] = await Promise.all([
+const [imgCobble, imgDirt, imgNewGrass, imgGrassTop, imgTNT] = await Promise.all([
     loadAndResizeBitmap(grassImageSrc, TEXTURE_SIZE, TEXTURE_SIZE),
     loadAndResizeBitmap(dirtImageSrc, TEXTURE_SIZE, TEXTURE_SIZE),
     loadAndResizeBitmap(newGrassImageSrc, TEXTURE_SIZE, TEXTURE_SIZE),
     loadAndResizeBitmap(grassTopImageSrc, TEXTURE_SIZE, TEXTURE_SIZE),
     loadAndResizeBitmap(tntImageSrc, TEXTURE_SIZE, TEXTURE_SIZE),
-    loadAndResizeBitmap(torchImageSrc, TEXTURE_SIZE, TEXTURE_SIZE)
 ]);
 console.log('Textures loaded successfully!');
 
 const texture = device.createTexture({
-    size: [TEXTURE_SIZE, TEXTURE_SIZE, 6], // Layer count 6 (added torch)
+    size: [TEXTURE_SIZE, TEXTURE_SIZE, 5], // Layer count 5 (removed torch)
     format: 'rgba8unorm',
     usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
 });
@@ -111,11 +110,6 @@ device.queue.copyExternalImageToTexture(
 device.queue.copyExternalImageToTexture(
     { source: imgTNT },
     { texture: texture, origin: { z: 4 } },
-    [TEXTURE_SIZE, TEXTURE_SIZE]
-);
-device.queue.copyExternalImageToTexture(
-    { source: imgTorch },
-    { texture: texture, origin: { z: 5 } },
     [TEXTURE_SIZE, TEXTURE_SIZE]
 );
 
@@ -225,7 +219,6 @@ const simpleRenderer = new SimpleRenderer(device, format);
 // 3 = Grass Side (Tex 2)
 // 4 = Grass Top (Tex 3) - Logic uses 3 for Grass Block.
 // 5 = TNT (Tex 4)
-// 6 = Torch (Tex 5)
 
 type BlockInstance = { pos: Float32Array, type: number };
 type ChunkData = {
@@ -675,32 +668,6 @@ const playerRadius = 0.3; // Half-width
 let cameraZoom = 6.0; // Distance for 3rd Person
 const eyeLevel = 1.8; // Camera height above feet for First Person
 
-// --- Torch Light System ---
-const torchPositions: vec3[] = []; // All torches in the world
-const MAX_TORCH_LIGHTS = 16; // Maximum torches to send to shader
-
-function addTorch(x: number, y: number, z: number) {
-    torchPositions.push(vec3.fromValues(x + 0.5, y + 0.5, z + 0.5)); // Center of block
-}
-
-function removeTorch(x: number, y: number, z: number) {
-    const tx = x + 0.5, ty = y + 0.5, tz = z + 0.5;
-    const index = torchPositions.findIndex(pos =>
-        Math.abs(pos[0] - tx) < 0.1 && Math.abs(pos[1] - ty) < 0.1 && Math.abs(pos[2] - tz) < 0.1
-    );
-    if (index !== -1) {
-        torchPositions.splice(index, 1);
-    }
-}
-
-function getNearestTorches(playerPos: vec3, maxCount: number): vec3[] {
-    return torchPositions
-        .map(pos => ({ pos, dist: vec3.distance(pos, playerPos) }))
-        .sort((a, b) => a.dist - b.dist)
-        .slice(0, maxCount)
-        .map(t => t.pos);
-}
-
 
 // Returns the integer Y level of the highest block hit, or null if no collision
 function checkCollision(pos: vec3): number | null {
@@ -742,14 +709,10 @@ function checkCollision(pos: vec3): number | null {
 // --- Inventory & Hotbar ---
 // Slots 0-8 (Keys 1-9)
 // Inventory Mapping: Slot Index -> Texture Type
-// Default: Slot 0 = Cobble (0), Slot 1 = Dirt (1), rest = Cobble
-// --- Inventory & Hotbar ---
-// Slots 0-8 (Keys 1-9)
-// Inventory Mapping: Slot Index -> Texture Type
-// Default: Slot 0 = Cobble (0), Slot 1 = Dirt (1), Slot 2 = Grass (2), Slot 3 = TNT (4), Slot 4 = Torch (5)
-const inventory = [0, 1, 2, 4, 5, 0, 0, 0, 0];
-// Initial Counts: 64 Cobble, 10 Dirt, 10 Grass, 100 TNT, 64 Torch
-const inventoryCounts = [64, 10, 10, 100, 64, 0, 0, 0, 0];
+// Default: Slot 0 = Cobble (0), Slot 1 = Dirt (1), Slot 2 = Grass (2), Slot 3 = TNT (4)
+const inventory = [0, 1, 2, 4, 0, 0, 0, 0, 0];
+// Initial Counts: 64 Cobble, 10 Dirt, 10 Grass, 100 TNT
+const inventoryCounts = [64, 10, 10, 100, 0, 0, 0, 0, 0];
 // Pad to 36 is done below in UI setup
 let selectedSlot = 0;
 
@@ -812,7 +775,6 @@ for (let i = 0; i < 9; i++) {
     else if (type === 1) icon.style.backgroundColor = '#855'; // Dirt
     else if (type === 2) icon.style.backgroundColor = '#484'; // Grass
     else if (type === 4) icon.style.backgroundColor = '#F00'; // TNT
-    else if (type === 5) icon.style.backgroundColor = '#FA0'; // Torch (bright orange)
     else icon.style.backgroundColor = '#888';
     slot.appendChild(icon);
 
@@ -1473,50 +1435,69 @@ function raycast() {
     return null;
 }
 
-window.addEventListener('mousedown', (e) => {
-    if (document.pointerLockElement !== canvas) return;
-    if (!currentHit) return;
+// Helper function to set a block and update its chunk
+function setBlock(x: number, y: number, z: number, type: number) {
+    const cx = Math.floor(x / CHUNK_SIZE);
+    const cz = Math.floor(z / CHUNK_SIZE);
+    const key = `${cx},${cz}`;
 
-    // Helper to rebuild single chunk mesh
-    const rebuildChunkMesh = (chunk: ChunkData, cx: number, cz: number) => {
-        chunk.visible = [];
-        for (let x = 0; x < CHUNK_SIZE; x++) {
-            for (let z = 0; z < CHUNK_SIZE; z++) {
-                const wx = cx * CHUNK_SIZE + x;
-                const wz = cz * CHUNK_SIZE + z;
-                // Full scan for correct culling
-                const minY = -Y_OFFSET;
-                const maxY = CHUNK_HEIGHT - Y_OFFSET - 1;
-                for (let y = minY; y <= maxY; y++) {
-                    const idx = getGridIndex(x, y, z);
-                    if (idx === -1) continue;
-                    const type = chunk.grid[idx];
-                    if (type === 0) continue;
+    const chunk = chunks.get(key);
+    if (chunk) {
+        const lx = x - cx * CHUNK_SIZE;
+        const lz = z - cz * CHUNK_SIZE;
+        const idx = getGridIndex(lx, y, lz);
 
-                    let exposed = false;
-                    const isSolid = (nx: number, ny: number, nz: number) => {
-                        const nIdx = getGridIndex(nx, ny, nz);
-                        if (nIdx === -1) return false;
-                        return chunk.grid[nIdx] !== 0;
-                    };
+        if (idx !== -1) {
+            chunk.grid[idx] = type;
+            rebuildChunkMesh(chunk, cx, cz);
+        }
+    }
+}
 
-                    if (!isSolid(x + 1, y, z)) exposed = true;
-                    else if (!isSolid(x - 1, y, z)) exposed = true;
-                    else if (!isSolid(x, y + 1, z)) exposed = true;
-                    else if (!isSolid(x, y - 1, z)) exposed = true;
-                    else if (!isSolid(x, y, z + 1)) exposed = true;
-                    else if (!isSolid(x, y, z - 1)) exposed = true;
+// Helper to rebuild single chunk mesh
+const rebuildChunkMesh = (chunk: ChunkData, cx: number, cz: number) => {
+    chunk.visible = [];
+    for (let x = 0; x < CHUNK_SIZE; x++) {
+        for (let z = 0; z < CHUNK_SIZE; z++) {
+            const wx = cx * CHUNK_SIZE + x;
+            const wz = cz * CHUNK_SIZE + z;
+            // Full scan for correct culling
+            const minY = -Y_OFFSET;
+            const maxY = CHUNK_HEIGHT - Y_OFFSET - 1;
+            for (let y = minY; y <= maxY; y++) {
+                const idx = getGridIndex(x, y, z);
+                if (idx === -1) continue;
+                const type = chunk.grid[idx];
+                if (type === 0) continue;
 
-                    if (exposed) {
-                        chunk.visible.push({
-                            pos: new Float32Array([wx, y, wz]),
-                            type: type - 1
-                        });
-                    }
+                let exposed = false;
+                const isSolid = (nx: number, ny: number, nz: number) => {
+                    const nIdx = getGridIndex(nx, ny, nz);
+                    if (nIdx === -1) return false;
+                    return chunk.grid[nIdx] !== 0;
+                };
+
+                if (!isSolid(x + 1, y, z)) exposed = true;
+                else if (!isSolid(x - 1, y, z)) exposed = true;
+                else if (!isSolid(x, y + 1, z)) exposed = true;
+                else if (!isSolid(x, y - 1, z)) exposed = true;
+                else if (!isSolid(x, y, z + 1)) exposed = true;
+                else if (!isSolid(x, y, z - 1)) exposed = true;
+
+                if (exposed) {
+                    chunk.visible.push({
+                        pos: new Float32Array([wx, y, wz]),
+                        type: type - 1
+                    });
                 }
             }
         }
-    };
+    }
+};
+
+window.addEventListener('mousedown', (e) => {
+    if (document.pointerLockElement !== canvas) return;
+    if (!currentHit) return;
 
     if (e.button === 0) { // Mine (Left Click)
         const px = Math.round(currentHit.point[0]);
@@ -1535,11 +1516,6 @@ window.addEventListener('mousedown', (e) => {
             if (idx !== -1 && chunk.grid[idx] !== 0) {
                 const oldType = chunk.grid[idx];
 
-                // Track torch removal
-                if (oldType === 6) { // Torch
-                    removeTorch(px, py, pz);
-                }
-
                 // Map block types to item types (what gets dropped)
                 // Grid type 1 (stone) -> Item type 0 (cobblestone texture)
                 // Grid type 2 (dirt) -> Item type 1 (dirt texture)
@@ -1548,9 +1524,8 @@ window.addEventListener('mousedown', (e) => {
                 let itemType = oldType - 1; // Default mapping
                 if (oldType === 1) itemType = 0; // Stone -> Cobblestone
 
-                chunk.grid[idx] = 0; // AIR
+                setBlock(px, py, pz, 0); // Set to Air
 
-                rebuildChunkMesh(chunk, cx, cz);
                 rebuildWorld(true); // Force update to remove block instantly
 
                 // Spawn Pickup at exact mined position (not surface)
@@ -1587,15 +1562,15 @@ window.addEventListener('mousedown', (e) => {
                     const idx = getGridIndex(lx, ny, lz);
 
                     if (idx !== -1 && chunk.grid[idx] === 0) {
-                        chunk.grid[idx] = inventory[selectedSlot] + 1;
-
-                        // Track torch placement
-                        if (inventory[selectedSlot] + 1 === 6) { // Torch block type
-                            addTorch(nx, ny, nz);
+                        setBlock(nx, ny, nz, inventory[selectedSlot] + 1);
+                        if (inventoryCounts[selectedSlot] !== Infinity) {
+                            inventoryCounts[selectedSlot]--;
+                            if (inventoryCounts[selectedSlot] <= 0) {
+                                inventory[selectedSlot] = 0; // Clear slot (set to air block type)
+                                inventoryCounts[selectedSlot] = 0;
+                            }
+                            updateInventoryUI();
                         }
-                        inventoryCounts[selectedSlot]--;
-
-                        rebuildChunkMesh(chunk, cx, cz);
                         rebuildWorld(true); // Force update to show block instantly
                         updateHotbarUI();
                     }
@@ -1917,7 +1892,7 @@ function frame() {
 
         // Update Pickups - Scan downward from item position for realistic gravity
         pickupSystem.update(dt, playerPosition, inventory, inventoryCounts, (pos: vec3) => {
-            // Scan downward from item's current position to find ground
+            // Scan downward from item's current position for realistic gravity
             const cx = Math.floor(pos[0] / CHUNK_SIZE);
             const cz = Math.floor(pos[2] / CHUNK_SIZE);
             const chunk = chunks.get(`${cx},${cz}`);
@@ -1964,47 +1939,6 @@ function frame() {
                 const minX = px - radius; const maxX = px + radius;
                 const minY = py - radius; const maxY = py + radius;
                 const minZ = pz - radius; const maxZ = pz + radius;
-
-                // Helper to rebuild single chunk mesh
-                const rebuildChunkMesh = (chunk: ChunkData, cx: number, cz: number) => {
-                    chunk.visible = [];
-                    for (let x = 0; x < CHUNK_SIZE; x++) {
-                        for (let z = 0; z < CHUNK_SIZE; z++) {
-                            const wx = cx * CHUNK_SIZE + x;
-                            const wz = cz * CHUNK_SIZE + z;
-                            // Fast scan
-                            const minY = -Y_OFFSET;
-                            const maxY = CHUNK_HEIGHT - Y_OFFSET - 1;
-                            for (let y = minY; y <= maxY; y++) {
-                                const idx = getGridIndex(x, y, z);
-                                if (idx === -1) continue;
-                                const type = chunk.grid[idx];
-                                if (type === 0) continue;
-
-                                let exposed = false;
-                                const isSolid = (nx: number, ny: number, nz: number) => {
-                                    const nIdx = getGridIndex(nx, ny, nz);
-                                    if (nIdx === -1) return false;
-                                    return chunk.grid[nIdx] !== 0;
-                                };
-
-                                if (!isSolid(x + 1, y, z)) exposed = true;
-                                else if (!isSolid(x - 1, y, z)) exposed = true;
-                                else if (!isSolid(x, y + 1, z)) exposed = true;
-                                else if (!isSolid(x, y - 1, z)) exposed = true;
-                                else if (!isSolid(x, y, z + 1)) exposed = true;
-                                else if (!isSolid(x, y, z - 1)) exposed = true;
-
-                                if (exposed) {
-                                    chunk.visible.push({
-                                        pos: new Float32Array([wx, y, wz]),
-                                        type: type - 1
-                                    });
-                                }
-                            }
-                        }
-                    }
-                };
 
                 const chunksToUpdate = new Set<string>();
 
@@ -2392,20 +2326,8 @@ function frame() {
     // 64-67: Camera Position
     uniformData.set([cameraPosition[0], cameraPosition[1], cameraPosition[2], 1.0], 64);
 
-    // 68-71: numTorches (u32) + padding (vec3<u32>)
-    const nearestTorches = getNearestTorches(playerPosition, MAX_TORCH_LIGHTS);
-    uniformData.set([nearestTorches.length, 0, 0, 0], 68); // numTorches + padding
-
-    // 72+: Torch positions (16 * vec4<f32> = 64 floats)
-    for (let i = 0; i < MAX_TORCH_LIGHTS; i++) {
-        const offset = 72 + (i * 4);
-        if (i < nearestTorches.length) {
-            const torch = nearestTorches[i];
-            uniformData.set([torch[0], torch[1], torch[2], 1.0], offset);
-        } else {
-            uniformData.set([0, 0, 0, 0], offset); // Empty slot
-        }
-    }
+    // Torches removed
+    uniformData.set([0, 0, 0, 0], 68);
 
     device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
