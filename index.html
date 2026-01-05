@@ -177,6 +177,55 @@
                 opacity: 1;
             }
         }
+
+        .contact-btn {
+            width: 160px;
+            text-align: center;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 3rem;
+                padding: 0 20px;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+                padding: 0 20px;
+            }
+
+            .author-name {
+                font-size: 1.5rem;
+            }
+
+            .nav-menu {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+
+            /* 
+               On mobile, we keep the fixed width concept but ensure it fits.
+               Since we are vertical, 160px is fine, or we can go wider.
+               Let's keep 160px to match desktop consistency as requested,
+               or maybe slightly wider for easier tapping.
+               Let's go with 200px for better touch targets on vertical stack.
+            */
+            .nav-item,
+            .contact-btn {
+                width: 200px;
+            }
+
+            /* Adjust dropdown position for vertical layout if needed */
+            .dropdown-content {
+                left: 50%;
+                transform: translateX(-50%);
+                width: 100%;
+                /* Match parent width */
+                min-width: 200px;
+            }
+        }
     </style>
 </head>
 
@@ -206,8 +255,8 @@
 
         <div
             style="margin-top: 30px; width: 100%; display: flex; justify-content: center; animation: fadeInUp 1s ease-out 0.9s backwards;">
-            <a href="mailto:jongeorge1999@gmail.com" class="nav-link"
-                style="border-color: #4CAF50; color: #4CAF50; width: 160px; text-align: center;">Contact Me</a>
+            <a href="mailto:jongeorge1999@gmail.com" class="nav-link contact-btn"
+                style="border-color: #4CAF50; color: #4CAF50;">Contact Me</a>
         </div>
     </div>
 </body>
